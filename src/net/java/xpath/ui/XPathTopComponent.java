@@ -175,7 +175,6 @@ public final class XPathTopComponent extends TopComponent {
     private void saveButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
 
         JFileChooser chooser = new JFileChooser();
-        FileUtil.preventFileChooserSymlinkTraversal(chooser, null);
 
         chooser.setDialogTitle("Export As...");
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);

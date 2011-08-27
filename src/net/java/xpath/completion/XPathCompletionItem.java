@@ -35,6 +35,7 @@ public class XPathCompletionItem implements CompletionItem {
         this.caretOffset = caretOffset;
     }
 
+    @Override
     public void defaultAction(JTextComponent component) {
         try {
             StyledDocument doc = (StyledDocument) component.getDocument();
@@ -50,26 +51,32 @@ public class XPathCompletionItem implements CompletionItem {
         }
     }
 
+    @Override
     public void processKeyEvent(KeyEvent evt) {
         if(evt.getKeyCode() == KeyEvent.VK_ENTER && evt.getSource() instanceof JTextComponent)
             defaultAction((JTextComponent) evt.getSource());
     }
 
+    @Override
     public int getPreferredWidth(Graphics graphics, Font font) {
         return CompletionUtilities.getPreferredWidth(text, null, graphics, font);
     }
 
+    @Override
     public void render(Graphics g, Font defaultFont, Color defaultColor, Color backgroundColor, int width, int height, boolean selected) {
         CompletionUtilities.renderHtml(null, text, null, g, defaultFont, (selected ? Color.white : fieldColor), width, height, selected);
     }
 
+    @Override
     public CompletionTask createDocumentationTask() {
         return null;
     }
 
+    @Override
     public CompletionTask createToolTipTask() {
 
         return new AsyncCompletionTask(new AsyncCompletionQuery() {
+            @Override
             protected void query(CompletionResultSet completionResultSet, Document document, int i) {
                 JToolTip toolTip = new JToolTip();
                 toolTip.setTipText("Press Enter to insert \"" + text + "\"");
@@ -79,15 +86,18 @@ public class XPathCompletionItem implements CompletionItem {
         });
     }
 
+    @Override
     public boolean instantSubstitution(JTextComponent component) {
         defaultAction(component);
         return true;
     }
 
+    @Override
     public int getSortPriority() {
         return 0;
     }
 
+    @Override
     public CharSequence getSortText() {
         return text;
     }
@@ -96,6 +106,7 @@ public class XPathCompletionItem implements CompletionItem {
         return text;
     }
 
+    @Override
     public CharSequence getInsertPrefix() {
         return text;
     }

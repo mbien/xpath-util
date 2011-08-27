@@ -116,6 +116,7 @@ public class XPathEvaluator {
             sourceDocument = document;
         }
 
+        @Override
         public String getNamespaceURI(String prefix) {
             if (prefix.equals(XMLConstants.DEFAULT_NS_PREFIX)) {
                 return sourceDocument.lookupNamespaceURI(null);
@@ -124,11 +125,13 @@ public class XPathEvaluator {
             }
         }
 
+        @Override
         public String getPrefix(String namespaceURI) {
             return sourceDocument.lookupPrefix(namespaceURI);
         }
 
-        public Iterator getPrefixes(String namespaceURI) {
+        @Override
+        public Iterator<?> getPrefixes(String namespaceURI) {
             return null;
         }
     }

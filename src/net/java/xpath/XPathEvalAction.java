@@ -14,6 +14,7 @@ import org.openide.util.actions.CookieAction;
  */
 public final class XPathEvalAction extends CookieAction {
 
+    @Override
     protected void performAction(Node[] activatedNodes) {
         DataObject dataObject = activatedNodes[0].getLookup().lookup(DataObject.class);
         if(dataObject != null) {
@@ -22,16 +23,19 @@ public final class XPathEvalAction extends CookieAction {
         }
     }
 
+    @Override
     protected int mode() {
         return CookieAction.MODE_EXACTLY_ONE;
     }
 
+    @Override
     public String getName() {
         return NbBundle.getMessage(XPathEvalAction.class, "CTL_XPathEvalAction");
     }
 
-    @SuppressWarnings("unchecked")
-    protected Class<DataObject>[] cookieClasses() {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
+    protected Class<?>[] cookieClasses() {
         return new Class[]{DataObject.class};
     }
 
@@ -40,6 +44,7 @@ public final class XPathEvalAction extends CookieAction {
         return XPathTopComponent.ICON_PATH;
     }
 
+    @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
