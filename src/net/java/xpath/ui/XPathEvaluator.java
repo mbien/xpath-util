@@ -2,6 +2,7 @@ package net.java.xpath.ui;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Iterator;
 import javax.xml.XMLConstants;
@@ -26,6 +27,7 @@ import org.openide.util.Exceptions;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -38,7 +40,7 @@ public class XPathEvaluator {
     private Transformer transformer;
     private DocumentBuilder docBuilder;
 
-    public XPathEvaluator(){
+    public XPathEvaluator() {
         try {
             transformer = TransformerFactory.newInstance().newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -48,14 +50,19 @@ public class XPathEvaluator {
         }
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
+            factory.setNamespaceAware(false);
+            factory.setValidating(false);
             docBuilder = factory.newDocumentBuilder();
+            docBuilder.setEntityResolver(new EntityResolver() {
+                @Override
+                public InputSource resolveEntity(String publicId, String systemId) {
+                    return new InputSource(new StringReader(""));
+                }
+            });
         } catch (ParserConfigurationException ex) {
             Exceptions.printStackTrace(ex);
         }
     }
-
-
 
     public String evalXPathToString(String xpath, String xml) throws SAXException, IOException, TransformerException, XPathExpressionException {
 
@@ -63,7 +70,7 @@ public class XPathEvaluator {
             return "";
         }
 
-        NodeList resultXML = (NodeList)evaluate(xpath, xml, XPathConstants.NODESET);
+        NodeList resultXML = (NodeList) evaluate(xpath, xml, XPathConstants.NODESET);
 
         if (resultXML.getLength() != 0) {
 
@@ -112,6 +119,7 @@ public class XPathEvaluator {
     private final static class UniversalNamespaceResolver implements NamespaceContext {
 
         private Document sourceDocument;
+        
         public UniversalNamespaceResolver(Document document) {
             sourceDocument = document;
         }
@@ -135,5 +143,4 @@ public class XPathEvaluator {
             return null;
         }
     }
-
 }

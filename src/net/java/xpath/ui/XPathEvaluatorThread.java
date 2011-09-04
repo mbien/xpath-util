@@ -33,6 +33,7 @@ final class XPathEvaluatorThread extends Thread {
         this.eval = new XPathEvaluator();
 
         this.edtRunner = new Runnable() {
+            @Override
             public void run() {
                 XPathEvaluatorThread.this.component.setText(result);
             }
@@ -63,6 +64,7 @@ final class XPathEvaluatorThread extends Thread {
                 result = eval.evalXPathToString(xpath, xml);
             } catch (SAXException ex) {
                 result = "unable to parse document";
+                ex.printStackTrace();
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
             } catch (TransformerException ex) {
