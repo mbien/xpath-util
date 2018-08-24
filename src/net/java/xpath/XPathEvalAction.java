@@ -28,7 +28,6 @@ public final class XPathEvalAction extends CookieAction {
         return CookieAction.MODE_EXACTLY_ONE;
     }
 
-    @Override
     public String getName() {
         return NbBundle.getMessage(XPathEvalAction.class, "CTL_XPathEvalAction");
     }
@@ -39,17 +38,14 @@ public final class XPathEvalAction extends CookieAction {
         return new Class[]{DataObject.class};
     }
 
-    @Override
     protected String iconResource() {
         return XPathTopComponent.ICON_PATH;
     }
 
-    @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
 
-    @Override
     protected boolean asynchronous() {
         return false;
     }
