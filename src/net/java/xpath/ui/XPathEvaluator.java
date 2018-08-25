@@ -118,7 +118,7 @@ public class XPathEvaluator {
 
     private final static class UniversalNamespaceResolver implements NamespaceContext {
 
-        private Document sourceDocument;
+        private final Document sourceDocument;
         
         public UniversalNamespaceResolver(Document document) {
             sourceDocument = document;
@@ -139,7 +139,7 @@ public class XPathEvaluator {
         }
 
         @Override
-        public Iterator<?> getPrefixes(String namespaceURI) {
+        public Iterator<String> getPrefixes(String namespaceURI) {
             return null;
         }
     }

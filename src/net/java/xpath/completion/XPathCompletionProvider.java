@@ -28,6 +28,7 @@ import org.xml.sax.SAXException;
  */
 public class XPathCompletionProvider implements CompletionProvider {
 
+    @Override
     public CompletionTask createTask(int i, JTextComponent textComponent) {
 
         if (i != CompletionProvider.COMPLETION_QUERY_TYPE) {
@@ -38,6 +39,7 @@ public class XPathCompletionProvider implements CompletionProvider {
 
     }
 
+    @Override
     public int getAutoQueryTypes(JTextComponent arg0, String arg1) {
         return 0;
     }
@@ -129,9 +131,7 @@ public class XPathCompletionProvider implements CompletionProvider {
                         Completion.get().hideAll();
                     }
 
-                } catch (SAXException ex) {
-                } catch (IOException ex) {
-                } catch (XPathExpressionException ex) {
+                } catch (SAXException | IOException | XPathExpressionException ex) {
                 }
 
             } catch (BadLocationException ex) {
