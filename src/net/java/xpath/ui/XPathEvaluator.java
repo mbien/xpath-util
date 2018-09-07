@@ -39,6 +39,7 @@ public class XPathEvaluator {
 
     private Transformer transformer;
     private DocumentBuilder docBuilder;
+    private final XPathFactory xFac;
 
     public XPathEvaluator() {
         try {
@@ -62,6 +63,7 @@ public class XPathEvaluator {
         } catch (ParserConfigurationException ex) {
             Exceptions.printStackTrace(ex);
         }
+        xFac = XPathFactory.newInstance();
     }
 
     public String evalXPathToString(String xpath, String xml) throws SAXException, IOException, TransformerException, XPathExpressionException {
@@ -72,9 +74,9 @@ public class XPathEvaluator {
 
         NodeList resultXML = (NodeList) evaluate(xpath, xml, XPathConstants.NODESET);
 
-        if (resultXML.getLength() != 0) {
+        if (resultXML.getLength() > 0) {
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(resultXML.getLength()*80);
 
             for (int i = 0; i < resultXML.getLength(); i++) {
 
@@ -98,8 +100,6 @@ public class XPathEvaluator {
     public Object evaluate(String xpath, String xml, QName ret) throws SAXException, IOException, XPathExpressionException {
 
         Document sourceXML = docBuilder.parse(new InputSource(new CharArrayReader(xml.toCharArray())));
-        XPathFactory factory = XPathFactory.newInstance();
-        XPath xPath = factory.newXPath();
 
         //hack; found no way to get it working with default namespaces
         if(sourceXML.lookupNamespaceURI(null) != null) {
@@ -110,6 +110,7 @@ public class XPathEvaluator {
             } catch (ParserConfigurationException ex) {}
         }
 
+        XPath xPath = xFac.newXPath();
         xPath.setNamespaceContext(new UniversalNamespaceResolver(sourceXML));
         XPathExpression expr = xPath.compile(xpath);
         return expr.evaluate(sourceXML, ret);

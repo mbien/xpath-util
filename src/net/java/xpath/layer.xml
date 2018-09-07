@@ -29,6 +29,7 @@
         <folder name="Window">
             <file name="XPathAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/net-java-xpath-ui-XPathAction.instance"/>
+                <attr name="position" intvalue="850"/>
             </file>
         </folder>
     </folder>

@@ -8,6 +8,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
 import org.openide.util.Exceptions;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 final class XPathEvaluatorThread extends Thread {
 
@@ -32,11 +33,8 @@ final class XPathEvaluatorThread extends Thread {
 
         this.eval = new XPathEvaluator();
 
-        this.edtRunner = new Runnable() {
-            @Override
-            public void run() {
-                XPathEvaluatorThread.this.component.setText(result);
-            }
+        this.edtRunner = () -> {
+            XPathEvaluatorThread.this.component.setText(result);
         };
 
 
@@ -62,16 +60,17 @@ final class XPathEvaluatorThread extends Thread {
             try {
                 updated = false;
                 result = eval.evalXPathToString(xpath, xml);
+            } catch (SAXParseException ex) {
+                // return XML parser error messege if the document can't be parsed
+                result = "can't parse document:\n    ["+ex.getLineNumber()+", "+ex.getColumnNumber()+"] "+ex.getMessage();
             } catch (SAXException ex) {
-                result = "unable to parse document";
+                result = "can't parse document";
                 ex.printStackTrace();
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (TransformerException ex) {
-                Exceptions.printStackTrace(ex);
             } catch (XPathExpressionException ex) {
                 // return localized exception message on illegal xpath expr.
                 result = ex.getCause().getLocalizedMessage();
+            } catch (IOException | TransformerException ex) {
+                Exceptions.printStackTrace(ex);
             }
             /*
              * don't update if dirty (racecondition possible but doeasn't matter)

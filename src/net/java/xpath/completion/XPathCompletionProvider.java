@@ -131,10 +131,11 @@ public class XPathCompletionProvider implements CompletionProvider {
                         Completion.get().hideAll();
                     }
 
-                } catch (SAXException | IOException | XPathExpressionException ex) {
+                } catch (SAXException | XPathExpressionException ex) {
+                    // nothing to auto complete if the document or xpath is not valid
                 }
 
-            } catch (BadLocationException ex) {
+            } catch (BadLocationException | IOException ex) {
                 Exceptions.printStackTrace(ex);
             }
 
