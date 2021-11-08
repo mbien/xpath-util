@@ -5,45 +5,20 @@
     <folder name="Actions">
         <folder name="Window">
             <file name="net-java-xpath-ui-XPathAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="net.java.xpath.Bundle"/>
                 <attr name="component" methodvalue="net.java.xpath.ui.XPathTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="net.java.xpath.ui.Bundle#CTL_XPathAction"/>
+                <attr name="displayName" bundlevalue="net.java.xpath.Bundle#Actions/Window/net-java-xpath-ui-XPathAction.instance"/>
                 <attr name="iconBase" stringvalue="net/java/xpath/ui/utilities-terminal.png"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
-        </folder>
-        <folder name="XML">
-            <file name="net-java-xpath-XPathEvalAction.instance">
-                <attr name="position" intvalue="1000"/>
             </file>
         </folder>
     </folder>
 
     <folder name="Menu">
-        <folder name="BuildProject">
-            <file name="net-java-xpath-XPathEvalAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/XML/net-java-xpath-XPathEvalAction.instance"/>
-                <attr name="position" intvalue="887"/>
-            </file>
-        </folder>
         <folder name="Window">
             <file name="XPathAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/net-java-xpath-ui-XPathAction.instance"/>
                 <attr name="position" intvalue="850"/>
             </file>
-        </folder>
-    </folder>
-
-    <folder name="Loaders">
-        <folder name="text">
-            <folder name="xml-mime">
-                <folder name="Actions">
-                    <file name="net-java-xpath-XPathEvalAction.shadow">
-                        <attr name="originalFile" stringvalue="Actions/XML/net-java-xpath-XPathEvalAction.instance"/>
-                        <attr name="position" intvalue="650"/>
-                    </file>
-                </folder>
-            </folder>
         </folder>
     </folder>
 
@@ -54,8 +29,7 @@
                     <file name="net-java-xpath-completion-XPathCompletionProvider.instance"/>
                 </folder>
                 <file name="EditorKit.instance">
-                    <attr name="instanceClass"
-                    stringvalue="net.java.xpath.XPathEditorKit"/>
+                    <attr name="instanceClass" stringvalue="net.java.xpath.XPathEditorKit"/>
                 </file>
             </folder>
         </folder>
@@ -68,6 +42,7 @@
             </file>
         </folder>
     </folder>
+
     <folder name="Windows2">
         <folder name="Components">
             <file name="XPathTopComponent.settings" url="XPathTopComponentSettings.xml"/>

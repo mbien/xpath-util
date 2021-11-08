@@ -2,6 +2,7 @@ package net.java.xpath.completion;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Set;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
@@ -53,7 +54,7 @@ public class XPathCompletionProvider implements CompletionProvider {
                 final StyledDocument bDoc = (StyledDocument) document;
 
                 String lineTilCaret = bDoc.getText(0, caretOffset);
-                String lineTilCaretTrimed = lineTilCaret.trim();
+                String lineTilCaretTrimed = lineTilCaret.strip();
 
                 String exp;
                 String filterToken;
@@ -91,7 +92,7 @@ public class XPathCompletionProvider implements CompletionProvider {
 
                     if(list != null) {
 
-                        HashSet<String> set = new HashSet<String>();
+                        Set<String> set = new HashSet<>();
 
                         for(int b = 0; b < list.getLength(); b++) {
 
@@ -119,13 +120,7 @@ public class XPathCompletionProvider implements CompletionProvider {
                         }
 
                         for (String item : set) {
-                            completionResultSet.addItem(
-                                    new XPathCompletionItem(
-                                                item,
-                                                dotOffset,
-                                                caretOffset
-                                            )
-                                );
+                            completionResultSet.addItem(new XPathCompletionItem(item, dotOffset, caretOffset));
                         }
                     }else{
                         Completion.get().hideAll();

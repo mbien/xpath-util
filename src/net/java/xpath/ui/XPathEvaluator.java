@@ -27,7 +27,6 @@ import org.openide.util.Exceptions;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -54,12 +53,7 @@ public class XPathEvaluator {
             factory.setNamespaceAware(false);
             factory.setValidating(false);
             docBuilder = factory.newDocumentBuilder();
-            docBuilder.setEntityResolver(new EntityResolver() {
-                @Override
-                public InputSource resolveEntity(String publicId, String systemId) {
-                    return new InputSource(new StringReader(""));
-                }
-            });
+            docBuilder.setEntityResolver((String publicId, String systemId) -> new InputSource(new StringReader("")));
         } catch (ParserConfigurationException ex) {
             Exceptions.printStackTrace(ex);
         }

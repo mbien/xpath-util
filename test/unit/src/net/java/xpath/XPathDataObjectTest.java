@@ -6,15 +6,16 @@ package net.java.xpath;
 
 import org.junit.Test;
 import org.openide.filesystems.FileObject;
-import org.openide.filesystems.Repository;
+import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
+
 import static org.junit.Assert.*;
 
 public class XPathDataObjectTest {
 
     @Test
     public void testDataObject() throws Exception {
-        FileObject root = Repository.getDefault().getDefaultFileSystem().getRoot();
+        FileObject root =  FileUtil.getConfigRoot();
         FileObject template = root.getFileObject("Templates/Other/XPathTemplate.xpath");
         assertNotNull("Template file shall be found", template);
 

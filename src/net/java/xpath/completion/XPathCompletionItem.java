@@ -24,10 +24,11 @@ import org.openide.util.Exceptions;
  */
 public class XPathCompletionItem implements CompletionItem {
 
-    private String text;
-    private static Color fieldColor = Color.decode("0x0000B2");
-    private int caretOffset;
-    private int dotOffset;
+    private static final Color FIELD_COLOR = Color.decode("0x0000B2");
+    
+    private final String text;
+    private final int caretOffset;
+    private final int dotOffset;
 
     public XPathCompletionItem(String text, int dotOffset, int caretOffset) {
         this.text = text;
@@ -64,7 +65,7 @@ public class XPathCompletionItem implements CompletionItem {
 
     @Override
     public void render(Graphics g, Font defaultFont, Color defaultColor, Color backgroundColor, int width, int height, boolean selected) {
-        CompletionUtilities.renderHtml(null, text, null, g, defaultFont, (selected ? Color.white : fieldColor), width, height, selected);
+        CompletionUtilities.renderHtml(null, text, null, g, defaultFont, selected ? Color.WHITE : FIELD_COLOR, width, height, selected);
     }
 
     @Override

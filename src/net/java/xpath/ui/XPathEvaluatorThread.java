@@ -16,8 +16,6 @@ final class XPathEvaluatorThread extends Thread {
     private volatile boolean updated = false;
 
     private final JTextComponent component;
-    private final Runnable edtRunner;
-
     private final XPathEvaluator eval;
 
     private String xpath;
@@ -32,11 +30,6 @@ final class XPathEvaluatorThread extends Thread {
         this.setDaemon(true);
 
         this.eval = new XPathEvaluator();
-
-        this.edtRunner = () -> {
-            XPathEvaluatorThread.this.component.setText(result);
-        };
-
 
     }
 
@@ -65,7 +58,7 @@ final class XPathEvaluatorThread extends Thread {
                 result = "can't parse document:\n    ["+ex.getLineNumber()+", "+ex.getColumnNumber()+"] "+ex.getMessage();
             } catch (SAXException ex) {
                 result = "can't parse document";
-                ex.printStackTrace();
+                Exceptions.printStackTrace(ex);
             } catch (XPathExpressionException ex) {
                 // return localized exception message on illegal xpath expr.
                 result = ex.getCause().getLocalizedMessage();
@@ -79,7 +72,7 @@ final class XPathEvaluatorThread extends Thread {
                 continue;
             }
             try {
-                SwingUtilities.invokeAndWait(edtRunner);
+                SwingUtilities.invokeAndWait(() -> XPathEvaluatorThread.this.component.setText(result));
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 return;
@@ -90,12 +83,11 @@ final class XPathEvaluatorThread extends Thread {
     }
 
 
-
     /**
      * Starts asynchronous evaluation of the xpath expression. This method
      * can be called concurrently even if a evaluation is in progress.
      */
-    synchronized void asyncEval(String xpath, String xml) {
+    public synchronized void asyncEval(String xpath, String xml) {
         this.updated = true;
         this.xml = xml;
         this.xpath = xpath;
