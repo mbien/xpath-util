@@ -1,3 +1,3 @@
-build
+/target/
 **~
-**/nbproject/private
+**/nbproject/private/
