@@ -24,6 +24,8 @@ import org.openide.util.actions.CookieAction;
 })
 public final class XPathEvalAction extends CookieAction {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     protected void performAction(Node[] activatedNodes) {
         DataObject dataObject = activatedNodes[0].getLookup().lookup(DataObject.class);

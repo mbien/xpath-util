@@ -28,6 +28,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.editor.EditorRegistry;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
 import org.openide.awt.Mnemonics;
 import org.openide.cookies.EditCookie;
 import org.openide.cookies.OpenCookie;
@@ -45,6 +47,18 @@ import org.openide.windows.WindowManager;
  * Top component for XPath evaluation.
  * @author Michael Bien
  */
+@TopComponent.Description(
+        preferredID = "XPathTopComponent",
+        iconBase="net/java/xpath/ui/utilities-terminal.png",
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "output", openAtStartup = false)
+@ActionID(category = "Window", id = "net.java.xpath.XPathTopComponent")
+@ActionReference(path = "Menu/Window" , position = 850)
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_XPathAction",
+        preferredID = "XPathTopComponent"
+)
 public final class XPathTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;

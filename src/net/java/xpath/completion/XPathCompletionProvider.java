@@ -9,9 +9,11 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
+import net.java.xpath.XPathDataObject;
 import net.java.xpath.ui.XPathEvaluator;
 import net.java.xpath.ui.XPathTopComponent;
 import org.netbeans.api.editor.completion.Completion;
+import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.spi.editor.completion.CompletionProvider;
 import org.netbeans.spi.editor.completion.CompletionResultSet;
 import org.netbeans.spi.editor.completion.CompletionTask;
@@ -27,17 +29,17 @@ import org.xml.sax.SAXException;
  *
  * @author Michael Bien
  */
+@MimeRegistration(mimeType = XPathDataObject.MIME_TYPE, service = CompletionProvider.class)
 public class XPathCompletionProvider implements CompletionProvider {
 
     @Override
-    public CompletionTask createTask(int i, JTextComponent textComponent) {
+    public CompletionTask createTask(int type, JTextComponent textComponent) {
 
-        if (i != CompletionProvider.COMPLETION_QUERY_TYPE) {
+        if (type != CompletionProvider.COMPLETION_QUERY_TYPE || XPathTopComponent.getDefault().lastFocusedEditor == null) {
             return null;
         }
 
         return new AsyncCompletionTask(new XPathCompletionQuery(), textComponent);
-
     }
 
     @Override
