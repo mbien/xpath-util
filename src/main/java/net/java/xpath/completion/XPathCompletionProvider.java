@@ -43,8 +43,12 @@ public class XPathCompletionProvider implements CompletionProvider {
     }
 
     @Override
-    public int getAutoQueryTypes(JTextComponent arg0, String arg1) {
-        return 0;
+    public int getAutoQueryTypes(JTextComponent component, String str) {
+        if (str != null && (str.endsWith("/") || str.endsWith("@"))) {
+            return CompletionProvider.COMPLETION_QUERY_TYPE;
+        } else {
+            return 0;
+        }
     }
 
     private static class XPathCompletionQuery extends AsyncCompletionQuery {
@@ -60,8 +64,6 @@ public class XPathCompletionProvider implements CompletionProvider {
 
                 String exp;
                 String filterToken;
-
-                boolean attributeQuery;
 
                 int slashIndex = lineTilCaret.lastIndexOf('/');
                 int atIndex = lineTilCaret.lastIndexOf('@');
@@ -81,8 +83,6 @@ public class XPathCompletionProvider implements CompletionProvider {
                     dotOffset = 0;
                 }
 
-                attributeQuery = atIndex > slashIndex;
-
                 filterToken = lineTilCaret.substring(Math.max(slashIndex, atIndex)+1, caretOffset);
 
                 XPathEvaluator eval = new XPathEvaluator();
@@ -100,22 +100,21 @@ public class XPathCompletionProvider implements CompletionProvider {
 
                             Node current = list.item(b);
 
-                            if(attributeQuery) {
-                                NamedNodeMap attributes = current.getAttributes();
+                            NamedNodeMap attributes = current.getAttributes();
+                            if (attributes != null) {
                                 for(int a = 0; a < attributes.getLength(); a++) {
                                     String name = attributes.item(a).getNodeName();
                                     if(name != null && name.startsWith(filterToken)) {
                                         set.add("@"+name);
                                     }
                                 }
-                            }else{
-                                NodeList childNodes = current.getChildNodes();
-                                for(int n = 0; n < childNodes.getLength(); n++) {
-                                    Node item = childNodes.item(n);
-                                    String name = item.getNodeName();
-                                    if(item.getNodeType() == Node.ELEMENT_NODE && name.startsWith(filterToken)) {
-                                        set.add(name);
-                                    }
+                            }
+                            NodeList childNodes = current.getChildNodes();
+                            for(int n = 0; n < childNodes.getLength(); n++) {
+                                Node item = childNodes.item(n);
+                                String name = item.getNodeName();
+                                if(item.getNodeType() == Node.ELEMENT_NODE && name.startsWith(filterToken)) {
+                                    set.add(name);
                                 }
                             }
 
