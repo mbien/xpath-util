@@ -27,6 +27,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
+import net.java.xpath.XPathDataObject;
 import org.netbeans.api.editor.EditorRegistry;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -48,7 +49,7 @@ import org.openide.windows.WindowManager;
  * @author Michael Bien
  */
 @TopComponent.Description(
-        preferredID = "XPathTopComponent",
+        preferredID = XPathTopComponent.PREFERRED_ID,
         iconBase="net/java/xpath/ui/utilities-terminal.png",
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
@@ -57,7 +58,7 @@ import org.openide.windows.WindowManager;
 @ActionReference(path = "Menu/Window" , position = 850)
 @TopComponent.OpenActionRegistration(
         displayName = "#CTL_XPathAction",
-        preferredID = "XPathTopComponent"
+        preferredID = XPathTopComponent.PREFERRED_ID
 )
 public final class XPathTopComponent extends TopComponent {
 
@@ -67,8 +68,7 @@ public final class XPathTopComponent extends TopComponent {
 
     /** path to the icon used by the component and its open action */
     public static final String ICON_PATH = "net/java/xpath/ui/utilities-terminal.png";
-
-    private static final String PREFERRED_ID = "XPathTopComponent";
+    public static final String PREFERRED_ID = "XPathTopComponent";
 
     private XPathEvaluatorThread evaluator;
     public JTextComponent lastFocusedEditor;
@@ -87,7 +87,7 @@ public final class XPathTopComponent extends TopComponent {
         setIcon(ImageUtilities.loadImage(ICON_PATH, true));
 
         outputPane.setEditorKit(CloneableEditorSupport.getEditorKit("text/xml"));
-        xpathTextField.setEditorKit(CloneableEditorSupport.getEditorKit("text/x-xpath"));
+        xpathTextField.setEditorKit(CloneableEditorSupport.getEditorKit(XPathDataObject.MIME_TYPE));
 
         xpathTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e)  { xpathTextFieldChanged(e); }
@@ -95,17 +95,21 @@ public final class XPathTopComponent extends TopComponent {
             @Override public void changedUpdate(DocumentEvent e) { xpathTextFieldChanged(e); }
         });
 
-        // hack: consume the return key to prevent new lines
         xpathTextField.addKeyListener(new KeyAdapter() {
             @Override public void keyPressed(KeyEvent e) {
-                if(e.getKeyCode() == KeyEvent.VK_ENTER) { e.consume(); }
+                if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    e.consume(); // hack: consume the return key to prevent new lines
+                    xpathTextFieldChanged(xpathTextField.getText());
+                }
             }
         });
 
         EditorRegistry.addPropertyChangeListener((PropertyChangeEvent evt) -> {
-            if(EditorRegistry.FOCUS_GAINED_PROPERTY.equals(evt.getPropertyName())) {
-                if(xpathTextField != evt.getOldValue() && evt.getOldValue() instanceof JTextComponent) {
-                    lastFocusedEditor = (JTextComponent)evt.getOldValue();
+            if (EditorRegistry.FOCUS_GAINED_PROPERTY.equals(evt.getPropertyName()) && evt.getOldValue() instanceof JTextComponent) {
+                editorFocusChanged((JTextComponent) evt.getOldValue());
+            } else if (EditorRegistry.COMPONENT_REMOVED_PROPERTY.equals(evt.getPropertyName())) {
+                if (evt.getOldValue() == lastFocusedEditor) {
+                    lastFocusedEditor = null;
                 }
             }
         });
@@ -226,28 +230,33 @@ public final class XPathTopComponent extends TopComponent {
     // End of variables declaration//GEN-END:variables
 
 
+    private void editorFocusChanged(JTextComponent last) {
+        if (last != null && xpathTextField != last && outputPane != last && !last.getClass().getPackageName().startsWith("org.netbeans.modules.quicksearch")) {
+            lastFocusedEditor = last;
+        }
+    }
+
     private void xpathTextFieldChanged(DocumentEvent e) {
         try {
-            String text = e.getDocument().getText(0, e.getDocument().getLength());
-
-            JTextComponent lastFocusedComponent = EditorRegistry.lastFocusedComponent();
-
-            if(lastFocusedComponent != xpathTextField)
-                lastFocusedEditor = lastFocusedComponent;
-
-            if(lastFocusedEditor != null) {
-
-                String editorContent = lastFocusedEditor.getText();
-
-                if(editorContent != null) {
-                    evaluator.asyncEval(text, editorContent);
-                }else {
-                    outputPane.setText("<please focus an edior containing a xml file>");
-                }
-            }
+            xpathTextFieldChanged(e.getDocument().getText(0, e.getDocument().getLength()));
         } catch (BadLocationException ignored) {}
     }
 
+    private void xpathTextFieldChanged(String xpath) {
+
+        editorFocusChanged(EditorRegistry.lastFocusedComponent());
+
+        if(lastFocusedEditor != null) {
+
+            String editorContent = lastFocusedEditor.getText();
+
+            if(editorContent != null) {
+                evaluator.asyncEval(xpath, editorContent);
+                return;
+            }
+        }
+        outputPane.setText("<please focus an edior containing a xml file/>");
+    }
 
     /**
      * Gets default instance. Do not use directly: reserved for *.settings files only,
