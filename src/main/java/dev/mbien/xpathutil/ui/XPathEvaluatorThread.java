@@ -1,4 +1,4 @@
-package net.java.xpath.ui;
+package dev.mbien.xpathutil.ui;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;

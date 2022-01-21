@@ -1,6 +1,6 @@
-package net.java.xpath;
+package dev.mbien.xpathutil;
 
-import net.java.xpath.ui.XPathTopComponent;
+import dev.mbien.xpathutil.ui.XPathTopComponent;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -16,7 +16,7 @@ import org.openide.util.actions.CookieAction;
  * Opens the XPath evaluator view.
  * @author Michael Bien
  */
-@ActionID(id = "net.java.xpath.XPathEvalAction", category = "XML")
+@ActionID(id = "dev.mbien.xpathutil.XPathEvalAction", category = "XML")
 @ActionRegistration(displayName = "Evaluate XPath", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/BuildProject", position = 887),

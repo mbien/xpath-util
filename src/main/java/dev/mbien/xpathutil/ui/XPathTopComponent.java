@@ -1,5 +1,6 @@
-package net.java.xpath.ui;
+package dev.mbien.xpathutil.ui;
 
+import dev.mbien.xpathutil.XPathDataObject;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -27,7 +28,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
-import net.java.xpath.XPathDataObject;
 import org.netbeans.api.editor.EditorRegistry;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -50,11 +50,11 @@ import org.openide.windows.WindowManager;
  */
 @TopComponent.Description(
         preferredID = XPathTopComponent.PREFERRED_ID,
-        iconBase="net/java/xpath/ui/utilities-terminal.png",
+        iconBase="dev/mbien/xpathutil/ui/utilities-terminal.png",
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
 @TopComponent.Registration(mode = "output", openAtStartup = false)
-@ActionID(category = "Window", id = "net.java.xpath.XPathTopComponent")
+@ActionID(category = "Window", id = "dev.mbien.xpathutil.XPathTopComponent")
 @ActionReference(path = "Menu/Window" , position = 850)
 @TopComponent.OpenActionRegistration(
         displayName = "#CTL_XPathAction",
@@ -67,7 +67,7 @@ public final class XPathTopComponent extends TopComponent {
     private static XPathTopComponent instance;
 
     /** path to the icon used by the component and its open action */
-    public static final String ICON_PATH = "net/java/xpath/ui/utilities-terminal.png";
+    public static final String ICON_PATH = "dev/mbien/xpathutil/ui/utilities-terminal.png";
     public static final String PREFERRED_ID = "XPathTopComponent";
 
     private XPathEvaluatorThread evaluator;

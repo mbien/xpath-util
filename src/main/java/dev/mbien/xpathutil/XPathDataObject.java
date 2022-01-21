@@ -1,4 +1,4 @@
-package net.java.xpath;
+package dev.mbien.xpathutil;
 
 import java.io.IOException;
 import org.openide.filesystems.FileObject;
@@ -25,7 +25,7 @@ import org.openide.text.DataEditorSupport;
 )
 @DataObject.Registration(
         mimeType = XPathDataObject.MIME_TYPE,
-        iconBase = "net/java/xpath/ui/utilities-terminal.png",
+        iconBase = "dev/mbien/xpathutil/ui/utilities-terminal.png",
         displayName = "XPath File Loader",
         position = 300
 )

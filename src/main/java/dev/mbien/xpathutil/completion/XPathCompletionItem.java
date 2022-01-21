@@ -1,4 +1,4 @@
-package net.java.xpath.completion;
+package dev.mbien.xpathutil.completion;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -26,8 +26,8 @@ import org.openide.util.ImageUtilities;
  */
 public class XPathCompletionItem implements CompletionItem {
 
-    private static final ImageIcon ATTRIBUTE_ICON = ImageUtilities.loadImageIcon("net/java/xpath/ui/attribute.png", false);
-    private static final ImageIcon ELEMENT_ICON = ImageUtilities.loadImageIcon("net/java/xpath/ui/element.png", false);
+    private static final ImageIcon ATTRIBUTE_ICON = ImageUtilities.loadImageIcon("dev/mbien/xpathutil/ui/attribute.png", false);
+    private static final ImageIcon ELEMENT_ICON = ImageUtilities.loadImageIcon("dev/mbien/xpathutil/ui/element.png", false);
 
     private final String text;
     private final int caretOffset;

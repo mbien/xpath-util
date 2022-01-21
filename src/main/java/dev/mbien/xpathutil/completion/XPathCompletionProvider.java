@@ -1,4 +1,4 @@
-package net.java.xpath.completion;
+package dev.mbien.xpathutil.completion;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -9,9 +9,9 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import net.java.xpath.XPathDataObject;
-import net.java.xpath.ui.XPathEvaluator;
-import net.java.xpath.ui.XPathTopComponent;
+import dev.mbien.xpathutil.XPathDataObject;
+import dev.mbien.xpathutil.ui.XPathEvaluator;
+import dev.mbien.xpathutil.ui.XPathTopComponent;
 import org.netbeans.api.editor.completion.Completion;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.spi.editor.completion.CompletionProvider;

@@ -1,5 +1,4 @@
-
-package net.java.xpath;
+package dev.mbien.xpathutil;
 
 import javax.swing.text.EditorKit;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
