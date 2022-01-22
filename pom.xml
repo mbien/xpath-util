@@ -1,13 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <name>NetBeans XPath Util plugin</name>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>dev.mbien</groupId>
-    <artifactId>xpathutil</artifactId>
+    <name>NetBeans XPath Utility</name>
+    <description>Provides xpath search functionality</description>
+    <url>https://github.com/mbien/xpath-util</url>
+
+    <groupId>dev.mbien.netbeans.xpath</groupId>
+    <artifactId>xpath-util</artifactId>
     <version>1.2-SNAPSHOT</version>
     <packaging>nbm</packaging>
+
+    <licenses>
+        <license>
+          <name>LGPL 2.1 License</name>
+          <url>https://opensource.org/licenses/LGPL-2.1</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+          <name>Michael Bien</name>
+          <email>mbien42@gmail.com</email>
+          <organization>Freelancer</organization>
+          <organizationUrl>https://mbien.dev</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git@github.com:mbien/xpath-util.git</connection>
+        <developerConnection>scm:git@github.com:mbien/xpath-util.git</developerConnection>
+        <url>https://github.com/mbien/xpath-util</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,6 +61,10 @@
                 <artifactId>nbm-maven-plugin</artifactId>
                 <version>4.6</version>
                 <extensions>true</extensions>
+                <configuration>
+                    <additionalArguments>
+                    </additionalArguments>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -123,4 +151,119 @@
             <version>${nbversion}</version>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>enforce-versions</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireMavenVersion>
+                                            <version>3.6.3</version>>
+                                        </requireMavenVersion>
+                                        <requireJavaVersion>
+                                            <version>11</version>
+                                        </requireJavaVersion>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- no warnings -->
+                                    <doclint>none</doclint>
+                                    <!-- no verbose output -->
+                                    <quiet>true</quiet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.0.1</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.thoughtworks.xstream</groupId>
+                                <artifactId>xstream</artifactId>
+                                <version>1.4.15</version> <!-- required for JDK 17 -->
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
 </project>
