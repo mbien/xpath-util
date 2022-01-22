@@ -6,12 +6,13 @@ import java.util.Set;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.StyledDocument;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import dev.mbien.xpathutil.XPathDataObject;
 import dev.mbien.xpathutil.ui.XPathEvaluator;
 import dev.mbien.xpathutil.ui.XPathTopComponent;
+import java.lang.reflect.InvocationTargetException;
+import javax.swing.SwingUtilities;
 import org.netbeans.api.editor.completion.Completion;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
 import org.netbeans.spi.editor.completion.CompletionProvider;
@@ -35,7 +36,7 @@ public class XPathCompletionProvider implements CompletionProvider {
     @Override
     public CompletionTask createTask(int type, JTextComponent textComponent) {
 
-        if (type != CompletionProvider.COMPLETION_QUERY_TYPE || XPathTopComponent.getDefault().lastFocusedEditor == null) {
+        if (type != CompletionProvider.COMPLETION_QUERY_TYPE && type != CompletionProvider.COMPLETION_ALL_QUERY_TYPE) {
             return null;
         }
 
@@ -53,13 +54,13 @@ public class XPathCompletionProvider implements CompletionProvider {
 
     private static class XPathCompletionQuery extends AsyncCompletionQuery {
 
+        private final static XPathEvaluator eval = new XPathEvaluator();
+
         @Override
-        protected void query(CompletionResultSet completionResultSet, Document document, int caretOffset) {
+        protected void query(CompletionResultSet completionResultSet, Document doc, int caretOffset) {
 
             try {
-                final StyledDocument bDoc = (StyledDocument) document;
-
-                String lineTilCaret = bDoc.getText(0, caretOffset);
+                String lineTilCaret = doc.getText(0, caretOffset);
                 String lineTilCaretTrimed = lineTilCaret.strip();
 
                 String exp;
@@ -85,10 +86,13 @@ public class XPathCompletionProvider implements CompletionProvider {
 
                 filterToken = lineTilCaret.substring(Math.max(slashIndex, atIndex)+1, caretOffset);
 
-                XPathEvaluator eval = new XPathEvaluator();
-
                 try {
-                    final String xml = XPathTopComponent.getDefault().lastFocusedEditor.getText();
+                    String xml;
+                    {
+                        String[] res = new String[1];
+                        SwingUtilities.invokeAndWait(() -> res[0] = XPathTopComponent.findInstance().getSourceEditorText());
+                        xml = res[0];
+                    }
 
                     NodeList list = (NodeList)eval.evaluate(exp, xml, XPathConstants.NODESET);
 
@@ -129,6 +133,8 @@ public class XPathCompletionProvider implements CompletionProvider {
 
                 } catch (SAXException | XPathExpressionException ex) {
                     // nothing to auto complete if the document or xpath is not valid
+                } catch (InterruptedException | InvocationTargetException ex) {
+                    Exceptions.printStackTrace(ex);
                 }
 
             } catch (BadLocationException | IOException ex) {

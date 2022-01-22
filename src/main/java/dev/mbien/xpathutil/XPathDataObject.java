@@ -21,7 +21,8 @@ import org.openide.text.DataEditorSupport;
 @MIMEResolver.ExtensionRegistration(
         displayName = "XPath File",
         mimeType = XPathDataObject.MIME_TYPE,
-        extension = {"xpath"}
+        extension = {"xpath"},
+        position = 3210
 )
 @DataObject.Registration(
         mimeType = XPathDataObject.MIME_TYPE,

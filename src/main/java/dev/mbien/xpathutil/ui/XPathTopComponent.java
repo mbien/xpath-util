@@ -7,9 +7,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Serializable;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
@@ -19,6 +20,7 @@ import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
@@ -27,6 +29,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.editor.EditorRegistry;
 import org.openide.awt.ActionID;
@@ -53,13 +56,29 @@ import org.openide.windows.WindowManager;
         iconBase="dev/mbien/xpathutil/ui/utilities-terminal.png",
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
-@TopComponent.Registration(mode = "output", openAtStartup = false)
-@ActionID(category = "Window", id = "dev.mbien.xpathutil.XPathTopComponent")
-@ActionReference(path = "Menu/Window" , position = 850)
+@TopComponent.Registration(
+        mode = "output",
+        position = 999,
+        openAtStartup = false
+)
+@ActionID(
+        category = "Window",
+        id = "dev.mbien.xpathutil.XPathTopComponent"
+)
+@ActionReference(
+        path = "Menu/Window",
+        position = 850
+)
 @TopComponent.OpenActionRegistration(
-        displayName = "#CTL_XPathAction",
+        displayName = "XPath",
         preferredID = XPathTopComponent.PREFERRED_ID
 )
+@NbBundle.Messages({
+    "CTL_XPathTopComponent=XPath",
+    "HINT_XPathTopComponent=XPath evaluator",
+    "XPathTopComponent.expressionLabel.text=Expression:",
+    "XPathTopComponent.saveButton.text=Save..."
+})
 public final class XPathTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
@@ -71,7 +90,8 @@ public final class XPathTopComponent extends TopComponent {
     public static final String PREFERRED_ID = "XPathTopComponent";
 
     private XPathEvaluatorThread evaluator;
-    public JTextComponent lastFocusedEditor;
+    private JTextComponent lastFocusedEditor;
+    private final DocumentListener docListener;
 
     private XPathTopComponent() {
 
@@ -89,17 +109,18 @@ public final class XPathTopComponent extends TopComponent {
         outputPane.setEditorKit(CloneableEditorSupport.getEditorKit("text/xml"));
         xpathTextField.setEditorKit(CloneableEditorSupport.getEditorKit(XPathDataObject.MIME_TYPE));
 
-        xpathTextField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e)  { xpathTextFieldChanged(e); }
-            @Override public void removeUpdate(DocumentEvent e)  { xpathTextFieldChanged(e); }
-            @Override public void changedUpdate(DocumentEvent e) { xpathTextFieldChanged(e); }
-        });
+        docListener = new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e)  { xpathTextFieldChanged(e.getDocument()); }
+            @Override public void removeUpdate(DocumentEvent e)  { xpathTextFieldChanged(e.getDocument()); }
+            @Override public void changedUpdate(DocumentEvent e) { xpathTextFieldChanged(e.getDocument()); }
+        };
+        xpathTextField.getDocument().addDocumentListener(docListener);
 
         xpathTextField.addKeyListener(new KeyAdapter() {
             @Override public void keyPressed(KeyEvent e) {
                 if(e.getKeyCode() == KeyEvent.VK_ENTER) {
                     e.consume(); // hack: consume the return key to prevent new lines
-                    xpathTextFieldChanged(xpathTextField.getText());
+                    xpathTextFieldChanged(((JTextComponent)e.getComponent()).getDocument());
                 }
             }
         });
@@ -126,10 +147,12 @@ public final class XPathTopComponent extends TopComponent {
         xpathTextField = new JEditorPane();
 
         Mnemonics.setLocalizedText(expressionLabel, NbBundle.getMessage(XPathTopComponent.class, "XPathTopComponent.expressionLabel.text")); // NOI18N
+
         outputPane.setEditable(false);
         outputPane.setFocusable(false);
         scrollPane.setViewportView(outputPane);
-        Mnemonics.setLocalizedText(saveButton, NbBundle.getMessage(XPathTopComponent.class, "XPathTopComponent.saveButton.text"));
+
+        Mnemonics.setLocalizedText(saveButton, NbBundle.getMessage(XPathTopComponent.class, "XPathTopComponent.saveButton.text")); // NOI18N
         saveButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 saveButtonActionPerformed(evt);
@@ -141,8 +164,7 @@ public final class XPathTopComponent extends TopComponent {
 
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(Alignment.LEADING)
+        layout.setHorizontalGroup(layout.createParallelGroup(Alignment.LEADING)
             .addGroup(Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(Alignment.TRAILING)
@@ -155,8 +177,7 @@ public final class XPathTopComponent extends TopComponent {
                         .addComponent(saveButton)))
                 .addContainerGap())
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(Alignment.LEADING)
+        layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(Alignment.LEADING)
@@ -179,31 +200,28 @@ public final class XPathTopComponent extends TopComponent {
         chooser.setDialogType(JFileChooser.SAVE_DIALOG);
         chooser.setFileFilter(new FileNameExtensionFilter("XML files", "xml", "xsd", "xls", "html"));
 
-        if (JFileChooser.APPROVE_OPTION == chooser.showSaveDialog(this)) {
+        if (JFileChooser.APPROVE_OPTION == chooser.showSaveDialog(null)) {
 
-            File output = chooser.getSelectedFile();
+            File file = chooser.getSelectedFile();
 
-            if(output != null) {
-                String content = outputPane.getText();
+            if(file != null) {
 
-                FileWriter fileWriter = null;
                 try {
-                    fileWriter = new FileWriter(output);
-                    fileWriter.write(content);
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
-                } finally {
-                    if(fileWriter != null) {
-                        try {
-                            fileWriter.close();
-                        } catch (IOException ex) {
-                            Exceptions.printStackTrace(ex);
+                    try {
+                        Files.writeString(file.toPath(), outputPane.getText(), StandardOpenOption.CREATE_NEW);
+                    } catch (FileAlreadyExistsException ex) {
+                        if (JOptionPane.showConfirmDialog(null, "Overwrite existing file?") == JOptionPane.YES_OPTION) {
+                            Files.writeString(file.toPath(), outputPane.getText(), StandardOpenOption.TRUNCATE_EXISTING);
+                        } else {
+                            return;
                         }
                     }
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
                 }
 
                 try{
-                    DataObject dao = DataObject.find(FileUtil.toFileObject(output));
+                    DataObject dao = DataObject.find(FileUtil.toFileObject(file));
                     OpenCookie oc = dao.getLookup().lookup(OpenCookie.class);
                     if(oc != null) {
                         oc.open();
@@ -218,9 +236,7 @@ public final class XPathTopComponent extends TopComponent {
                         Level.WARNING, "could not open exported xml file in editor", ex);
                 }
             }
-
         }
-
     }//GEN-LAST:event_saveButtonActionPerformed
 
 
@@ -231,67 +247,48 @@ public final class XPathTopComponent extends TopComponent {
 
 
     private void editorFocusChanged(JTextComponent last) {
-        if (last != null && xpathTextField != last && outputPane != last && !last.getClass().getPackageName().startsWith("org.netbeans.modules.quicksearch")) {
+        if (last != null && xpathTextField != last && !last.getClass().getPackageName().startsWith("org.netbeans.modules.quicksearch")) {
             lastFocusedEditor = last;
         }
     }
 
-    private void xpathTextFieldChanged(DocumentEvent e) {
+    private void xpathTextFieldChanged(Document doc) {
         try {
-            xpathTextFieldChanged(e.getDocument().getText(0, e.getDocument().getLength()));
+            editorFocusChanged(EditorRegistry.lastFocusedComponent());
+            if(lastFocusedEditor != null) {
+                String editorContent = getSourceEditorText();
+
+                if(editorContent != null) {
+                    evaluator.asyncEval(doc.getText(0, doc.getLength()), editorContent);
+                    return;
+                }
+            }
+            outputPane.setText("please focus an edior containing a xml file");
         } catch (BadLocationException ignored) {}
     }
 
-    private void xpathTextFieldChanged(String xpath) {
-
-        editorFocusChanged(EditorRegistry.lastFocusedComponent());
-
-        if(lastFocusedEditor != null) {
-
-            String editorContent = lastFocusedEditor.getText();
-
-            if(editorContent != null) {
-                evaluator.asyncEval(xpath, editorContent);
-                return;
-            }
+    public String getSourceEditorText() {
+        if (lastFocusedEditor == null || lastFocusedEditor.getDocument() == null) {
+            return "";
         }
-        outputPane.setText("<please focus an edior containing a xml file/>");
+        Document doc = lastFocusedEditor.getDocument();
+        try {
+            return doc.getText(0, doc.getLength());
+        } catch (BadLocationException ignored) {}
+        return "";
     }
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files only,
-     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-     * To obtain the singleton instance, use {@link #findInstance}.
-     */
-    public static synchronized XPathTopComponent getDefault() {
-        if (instance == null) {
-            instance = new XPathTopComponent();
-        }
-        return instance;
-    }
-
-    /**
-     * Obtain the XPathTopComponent instance. Never call {@link #getDefault} directly!
-     */
     public static synchronized XPathTopComponent findInstance() {
         TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(XPathTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
         if (win instanceof XPathTopComponent) {
             return (XPathTopComponent) win;
         }
         Logger.getLogger(XPathTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
+                "There seem to be multiple components with the '" + PREFERRED_ID +"' ID!");
+        if (instance == null) {
+            instance = new XPathTopComponent();
+        }
+        return instance;
     }
 
     @Override
@@ -299,6 +296,11 @@ public final class XPathTopComponent extends TopComponent {
         if(evaluator == null) {
             evaluator = new XPathEvaluatorThread(outputPane);
         }
+        // xxx: this fixes disappearing auto completion after the window was closed
+        // setting editor kit replaces the document too
+        xpathTextField.getDocument().removeDocumentListener(docListener);
+        xpathTextField.setEditorKit(CloneableEditorSupport.getEditorKit(XPathDataObject.MIME_TYPE));
+        xpathTextField.getDocument().addDocumentListener(docListener);
     }
 
     @Override
@@ -309,23 +311,4 @@ public final class XPathTopComponent extends TopComponent {
         }
     }
 
-    /** replaces this in object stream */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper();
-    }
-
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
-    }
-
-    private static final class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Object readResolve() {
-            return XPathTopComponent.getDefault();
-        }
-    }
 }

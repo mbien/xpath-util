@@ -22,6 +22,9 @@ import org.openide.util.actions.CookieAction;
     @ActionReference(path = "Menu/BuildProject", position = 887),
     @ActionReference(path = "Loaders/text/xml-mime/Actions", position = 650)
 })
+@NbBundle.Messages({
+    "CTL_XPathEvalAction=Evaluate XPath..."
+})
 public final class XPathEvalAction extends CookieAction {
 
     private static final long serialVersionUID = 1L;

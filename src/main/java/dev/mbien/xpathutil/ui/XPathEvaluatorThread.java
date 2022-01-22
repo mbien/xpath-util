@@ -55,13 +55,13 @@ final class XPathEvaluatorThread extends Thread {
                 result = eval.evalXPathToString(xpath, xml);
             } catch (SAXParseException ex) {
                 // return XML parser error messege if the document can't be parsed
-                result = "can't parse document:\n    ["+ex.getLineNumber()+", "+ex.getColumnNumber()+"] "+ex.getMessage();
+                result = "can't parse document:\n    ["+ex.getLineNumber()+", "+ex.getColumnNumber()+"] "+ex.getLocalizedMessage();
             } catch (SAXException ex) {
                 result = "can't parse document";
                 Exceptions.printStackTrace(ex);
             } catch (XPathExpressionException ex) {
                 // return localized exception message on illegal xpath expr.
-                result = ex.getCause().getLocalizedMessage();
+                result = "xpath expression error:\n    "+ex.getCause().getLocalizedMessage();
             } catch (IOException | TransformerException ex) {
                 Exceptions.printStackTrace(ex);
             }
