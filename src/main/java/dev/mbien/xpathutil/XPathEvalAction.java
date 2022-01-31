@@ -1,6 +1,7 @@
 package dev.mbien.xpathutil;
 
 import dev.mbien.xpathutil.ui.XPathTopComponent;
+import org.netbeans.api.xml.cookies.ValidateXMLCookie;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -20,10 +21,14 @@ import org.openide.util.actions.CookieAction;
 @ActionRegistration(displayName = "Evaluate XPath", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Menu/BuildProject", position = 887),
-    @ActionReference(path = "Loaders/text/xml-mime/Actions", position = 650)
+    @ActionReference(path = "Loaders/text/xml-mime/Actions", position = 650),
+    @ActionReference(path = "Loaders/text/html/Actions", position = 650),
+    @ActionReference(path = "Loaders/text/dtd-xml/Actions", position = 20050),
+    @ActionReference(path = "Loaders/text/x-maven-pom+xml/Actions", position = 350),
+    @ActionReference(path = "Loaders/text/xhtml/Actions", position = 885)
 })
 @NbBundle.Messages({
-    "CTL_XPathEvalAction=Evaluate XPath..."
+    "CTL_XPathEvalAction=Evaluate XPath"
 })
 public final class XPathEvalAction extends CookieAction {
 
@@ -33,8 +38,13 @@ public final class XPathEvalAction extends CookieAction {
     protected void performAction(Node[] activatedNodes) {
         DataObject dataObject = activatedNodes[0].getLookup().lookup(DataObject.class);
         if(dataObject != null) {
-            dataObject.getLookup().lookup(OpenCookie.class).open();
-            XPathTopComponent.findInstance().open();
+            OpenCookie file = dataObject.getLookup().lookup(OpenCookie.class);
+            if (file != null) {
+                file.open();
+            }
+            XPathTopComponent xpathComponent = XPathTopComponent.findInstance();
+            xpathComponent.open();
+            xpathComponent.requestActive();
         }
     }
 
@@ -48,10 +58,9 @@ public final class XPathEvalAction extends CookieAction {
         return NbBundle.getMessage(XPathEvalAction.class, "CTL_XPathEvalAction");
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     protected Class<?>[] cookieClasses() {
-        return new Class[]{DataObject.class};
+        return new Class<?>[] { ValidateXMLCookie.class };
     }
 
     @Override

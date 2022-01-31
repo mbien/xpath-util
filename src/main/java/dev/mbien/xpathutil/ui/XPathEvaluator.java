@@ -1,6 +1,5 @@
 package dev.mbien.xpathutil.ui;
 
-import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -50,14 +49,14 @@ public class XPathEvaluator {
         }
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(false);
+            factory.setNamespaceAware(true);
             factory.setValidating(false);
             docBuilder = factory.newDocumentBuilder();
             docBuilder.setEntityResolver((String publicId, String systemId) -> new InputSource(new StringReader("")));
         } catch (ParserConfigurationException ex) {
             Exceptions.printStackTrace(ex);
         }
-        xFac = XPathFactory.newInstance();
+        xFac = XPathFactory.newDefaultInstance();
     }
 
     public String evalXPathToString(String xpath, String xml) throws SAXException, IOException, TransformerException, XPathExpressionException {
@@ -76,13 +75,13 @@ public class XPathEvaluator {
 
                 Node item = resultXML.item(i);
                 String nodeValue = item.getNodeValue();
-
                 if (nodeValue == null) {
-                    StringWriter stringWriter = new StringWriter();
-                    transformer.transform(new DOMSource(item), new StreamResult(stringWriter));
-                    sb.append(stringWriter.toString());
+                    stripWhitespace(item);
+                    StringWriter writer = new StringWriter(128);
+                    transformer.transform(new DOMSource(item), new StreamResult(writer));
+                    sb.append(writer.getBuffer());
                 } else {
-                    sb.append(item.getNodeValue()).append("\n");
+                    sb.append(nodeValue).append("\n");
                 }
             }
             return sb.toString();
@@ -93,22 +92,24 @@ public class XPathEvaluator {
 
     public Object evaluate(String xpath, String xml, QName ret) throws SAXException, IOException, XPathExpressionException {
 
-        Document sourceXML = docBuilder.parse(new InputSource(new CharArrayReader(xml.toCharArray())));
-
-        //hack; found no way to get it working with default namespaces
-        if(sourceXML.lookupNamespaceURI(null) != null) {
-            try {
-                DocumentBuilderFactory fac = DocumentBuilderFactory.newInstance();
-                fac.setNamespaceAware(false);
-                sourceXML = fac.newDocumentBuilder().parse(new InputSource(new CharArrayReader(xml.toCharArray())));
-            } catch (ParserConfigurationException ex) {}
-        }
+        Document sourceXML = docBuilder.parse(new InputSource(new StringReader(xml)));
 
         XPath xPath = xFac.newXPath();
         xPath.setNamespaceContext(new UniversalNamespaceResolver(sourceXML));
         XPathExpression expr = xPath.compile(xpath);
         return expr.evaluate(sourceXML, ret);
 
+    }
+
+    public static void stripWhitespace(Node node) {
+        NodeList children = node.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node child = children.item(i);
+            if (child.getNodeType() == Node.TEXT_NODE) {
+                child.setTextContent(child.getTextContent().strip());
+            }
+            stripWhitespace(child);
+        }
     }
 
     private final static class UniversalNamespaceResolver implements NamespaceContext {

@@ -117,5 +117,10 @@
             <artifactId>org-netbeans-modules-editor-completion</artifactId>
             <version>${nbversion}</version>
         </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-api-xml-ui</artifactId>
+            <version>${nbversion}</version>
+        </dependency>
     </dependencies>
 </project>

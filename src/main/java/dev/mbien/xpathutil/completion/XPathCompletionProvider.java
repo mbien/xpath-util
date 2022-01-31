@@ -98,6 +98,9 @@ public class XPathCompletionProvider implements CompletionProvider {
 
                     if(list != null) {
 
+                        // this is faster than parsing a document but kinda hacky
+                        boolean hasNamespace = xml.contains("xmlns");
+
                         Set<String> set = new HashSet<>();
 
                         for(int b = 0; b < list.getLength(); b++) {
@@ -118,7 +121,11 @@ public class XPathCompletionProvider implements CompletionProvider {
                                 Node item = childNodes.item(n);
                                 String name = item.getNodeName();
                                 if(item.getNodeType() == Node.ELEMENT_NODE && name.startsWith(filterToken)) {
-                                    set.add(name);
+                                    if (hasNamespace && item.getPrefix() == null) {
+                                        set.add(":"+name);
+                                    } else {
+                                        set.add(name);
+                                    }
                                 }
                             }
 

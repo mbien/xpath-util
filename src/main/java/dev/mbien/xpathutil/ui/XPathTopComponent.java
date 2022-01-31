@@ -1,6 +1,7 @@
 package dev.mbien.xpathutil.ui;
 
 import dev.mbien.xpathutil.XPathDataObject;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -22,9 +23,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.border.BevelBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -159,8 +158,7 @@ public final class XPathTopComponent extends TopComponent {
             }
         });
 
-        xpathTextField.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-        xpathTextField.setFont(new JTextField().getFont());
+        xpathTextField.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 0)));
 
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
