@@ -31,11 +31,14 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.editor.EditorRegistry;
+import org.netbeans.modules.editor.NbEditorUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.Mnemonics;
 import org.openide.cookies.EditCookie;
+import org.openide.cookies.EditorCookie;
 import org.openide.cookies.OpenCookie;
+import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectNotFoundException;
@@ -88,11 +91,13 @@ public final class XPathTopComponent extends TopComponent {
     public static final String ICON_PATH = "dev/mbien/xpathutil/ui/utilities-terminal.png";
     public static final String PREFERRED_ID = "XPathTopComponent";
 
-    private XPathEvaluatorThread evaluator;
-    private JTextComponent lastFocusedEditor;
-    private final DocumentListener docListener;
+    private transient XPathEvaluatorThread evaluator;
+    private transient final DocumentListener docListener;
 
-    private XPathTopComponent() {
+    private transient DataObject activeDao;
+    private transient String lastFilename;
+
+    public XPathTopComponent() {
 
 //        org.netbeans.spi.editor.mimelookup.MimeDataProvider mdp = Lookup.getDefault().lookup(MimeDataProvider.class);
 //        Lookup mime = mdp.getLookup(MimePath.get("text/x-xpath"));
@@ -125,11 +130,12 @@ public final class XPathTopComponent extends TopComponent {
         });
 
         EditorRegistry.addPropertyChangeListener((PropertyChangeEvent evt) -> {
-            if (EditorRegistry.FOCUS_GAINED_PROPERTY.equals(evt.getPropertyName()) && evt.getOldValue() instanceof JTextComponent) {
-                editorFocusChanged((JTextComponent) evt.getOldValue());
+            if (EditorRegistry.FOCUS_GAINED_PROPERTY.equals(evt.getPropertyName()) && evt.getNewValue() instanceof JTextComponent) {
+                editorFocusChanged((JTextComponent) evt.getNewValue());
             } else if (EditorRegistry.COMPONENT_REMOVED_PROPERTY.equals(evt.getPropertyName())) {
-                if (evt.getOldValue() == lastFocusedEditor) {
-                    lastFocusedEditor = null;
+                DataObject removed = NbEditorUtilities.getDataObject(((JTextComponent) evt.getOldValue()).getDocument());
+                if (activeDao == removed) {
+                    activeDao = null;
                 }
             }
         });
@@ -244,32 +250,45 @@ public final class XPathTopComponent extends TopComponent {
     // End of variables declaration//GEN-END:variables
 
 
-    private void editorFocusChanged(JTextComponent last) {
-        if (last != null && xpathTextField != last && !last.getClass().getPackageName().startsWith("org.netbeans.modules.quicksearch")) {
-            lastFocusedEditor = last;
+    private void editorFocusChanged(JTextComponent inFocus) {
+        if (inFocus != null && xpathTextField != inFocus && !inFocus.getClass().getPackageName().startsWith("org.netbeans.modules.quicksearch")) {
+            activeDao = NbEditorUtilities.getDataObject(inFocus.getDocument());
+            DataObject dao = activeDao;
+            if (dao != null) {
+                FileObject file = dao.getPrimaryFile();
+                if (file != null) {
+                    lastFilename = file.getNameExt();
+                    return;
+                }
+            }
+            lastFilename = "unknown";
         }
     }
 
     private void xpathTextFieldChanged(Document doc) {
         try {
-            editorFocusChanged(EditorRegistry.lastFocusedComponent());
-            if(lastFocusedEditor != null) {
+            if (activeDao != null) {
                 String editorContent = getSourceEditorText();
 
-                if(editorContent != null) {
+                if (!editorContent.isBlank()) {
+                    setDisplayName("XPath ["+lastFilename+"]");
                     evaluator.asyncEval(doc.getText(0, doc.getLength()), editorContent);
                     return;
                 }
             }
-            outputPane.setText("please focus an edior containing a xml file");
+            setDisplayName("XPath");
+            outputPane.setText("focus xml document");
         } catch (BadLocationException ignored) {}
     }
 
     public String getSourceEditorText() {
-        if (lastFocusedEditor == null || lastFocusedEditor.getDocument() == null) {
+        if (activeDao == null) {
             return "";
         }
-        Document doc = lastFocusedEditor.getDocument();
+        Document doc = activeDao.getLookup().lookup(EditorCookie.class).getDocument();
+        if (doc == null) {
+            return "";
+        }
         try {
             return doc.getText(0, doc.getLength());
         } catch (BadLocationException ignored) {}
@@ -291,7 +310,8 @@ public final class XPathTopComponent extends TopComponent {
 
     @Override
     public void componentOpened() {
-        if(evaluator == null) {
+        setDisplayName("XPath");
+        if (evaluator == null) {
             evaluator = new XPathEvaluatorThread(outputPane);
         }
         // xxx: this fixes disappearing auto completion after the window was closed
@@ -303,10 +323,17 @@ public final class XPathTopComponent extends TopComponent {
 
     @Override
     public void componentClosed() {
-        if(evaluator != null) {
+        if (evaluator != null) {
             evaluator.interrupt();
             evaluator = null;
         }
+        activeDao = null;
+    }
+
+    public void requestActive(DataObject dao) {
+        activeDao = dao;
+        super.requestActive();
+        xpathTextField.requestFocusInWindow();
     }
 
 }

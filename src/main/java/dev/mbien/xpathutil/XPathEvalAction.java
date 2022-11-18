@@ -6,7 +6,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
-import org.openide.cookies.OpenCookie;
+import org.openide.cookies.EditorCookie;
 import org.openide.loaders.DataObject;
 import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
@@ -37,14 +37,14 @@ public final class XPathEvalAction extends CookieAction {
     @Override
     protected void performAction(Node[] activatedNodes) {
         DataObject dataObject = activatedNodes[0].getLookup().lookup(DataObject.class);
-        if(dataObject != null) {
-            OpenCookie file = dataObject.getLookup().lookup(OpenCookie.class);
+        if (dataObject != null) {
+            XPathTopComponent xpathComponent = XPathTopComponent.findInstance();
+            xpathComponent.open();
+            EditorCookie file = dataObject.getLookup().lookup(EditorCookie.class);
             if (file != null) {
                 file.open();
             }
-            XPathTopComponent xpathComponent = XPathTopComponent.findInstance();
-            xpathComponent.open();
-            xpathComponent.requestActive();
+            xpathComponent.requestActive(dataObject);
         }
     }
 
