@@ -35,17 +35,13 @@ public class XPathCompletionProvider implements CompletionProvider {
 
     @Override
     public CompletionTask createTask(int type, JTextComponent textComponent) {
-
-        if (type != CompletionProvider.COMPLETION_QUERY_TYPE && type != CompletionProvider.COMPLETION_ALL_QUERY_TYPE) {
-            return null;
-        }
-
-        return new AsyncCompletionTask(new XPathCompletionQuery(), textComponent);
+        return type == CompletionProvider.COMPLETION_QUERY_TYPE || type == CompletionProvider.COMPLETION_ALL_QUERY_TYPE
+                ? new AsyncCompletionTask(new XPathCompletionQuery(), textComponent) : null;
     }
 
     @Override
     public int getAutoQueryTypes(JTextComponent component, String str) {
-        return str != null && (str.endsWith("/") || str.endsWith("@")) ? CompletionProvider.COMPLETION_QUERY_TYPE : 0;
+        return str != null && (str.endsWith("/") || str.endsWith("@") || str.endsWith("[")) ? CompletionProvider.COMPLETION_QUERY_TYPE : 0;
     }
 
     private static class XPathCompletionQuery extends AsyncCompletionQuery {
@@ -53,35 +49,50 @@ public class XPathCompletionProvider implements CompletionProvider {
         private final static XPathEvaluator eval = new XPathEvaluator();
 
         @Override
-        protected void query(CompletionResultSet completionResultSet, Document doc, int caretOffset) {
+        protected void query(CompletionResultSet completionResultSet, Document doc, int caretIndex) {
 
             try {
-                String lineTilCaret = doc.getText(0, caretOffset);
-                String lineTilCaretStripped = lineTilCaret.strip();
+                String line = doc.getText(0, caretIndex);
+                String line_stripped = line.strip();
 
                 String exp;
 
-                int slashIndex = lineTilCaret.lastIndexOf('/');
-                int atIndex = lineTilCaret.lastIndexOf('@');
+                int slashIndex = line.lastIndexOf('/');
+                int slashIndex_stripped = line_stripped.lastIndexOf('/');
+
+                int atIndex = line.lastIndexOf('@');
+                int bracketIndex = line.lastIndexOf('[');
+
+                boolean in_square_bracket = bracketIndex > line.lastIndexOf(']');
 
                 int dotOffset;
-                if (lineTilCaretStripped.length() >= 2 && lineTilCaretStripped.charAt(0) == '/' && lineTilCaretStripped.charAt(1) == '/' && lineTilCaretStripped.lastIndexOf('/') == 1) {
-                    exp = lineTilCaret.substring(0, slashIndex+1) + "*";
-                    dotOffset = caretOffset - lineTilCaret.length() + exp.length()-1;
-                } else if (lineTilCaretStripped.length() >= 1 && lineTilCaretStripped.charAt(0) == '/' && lineTilCaretStripped.lastIndexOf('/') == 0) {
-                    exp = lineTilCaret.substring(0, slashIndex+1);
-                    dotOffset = caretOffset - lineTilCaret.length() + exp.length();
-                } else if (slashIndex != -1 || atIndex != -1) {
-                    exp = lineTilCaret.substring(0, Math.max(atIndex-1, slashIndex));
-                    dotOffset = caretOffset - lineTilCaret.length() + exp.length()+1;
+                if (in_square_bracket) {
+                    exp = line.substring(0, bracketIndex);
+                    String subpath = line.substring(bracketIndex+1, caretIndex);
+                    if (subpath.contains("/")) {
+                        subpath = subpath.substring(0, subpath.lastIndexOf('/') + 1);
+                        if (subpath.endsWith("/") && !subpath.startsWith("@")) {
+                            exp += "/" + subpath.substring(0, subpath.length() - 1);
+                        }
+                    }
+                    dotOffset = caretIndex - line.length() + exp.length() + 1;
+                } else if (slashIndex_stripped == 1 && line_stripped.startsWith("//")) {
+                    exp = line.substring(0, slashIndex + 1) + "*";
+                    dotOffset = caretIndex - line.length() + exp.length() - 1;
+                } else if (slashIndex_stripped == 0) {
+                    exp = line.substring(0, slashIndex + 1);
+                    dotOffset = caretIndex - line.length() + exp.length();
+                } else if (slashIndex_stripped != -1 || atIndex != -1) {
+                    exp = line.substring(0, max(atIndex - 1, slashIndex));
+                    dotOffset = caretIndex - line.length() + exp.length() + 1;
                 } else {
                     exp = "/";
                     dotOffset = 0;
                 }
 
-                String filterToken = lineTilCaret.substring(Math.max(slashIndex, atIndex)+1, caretOffset);
-                if (filterToken.startsWith(":")) {
-                    filterToken = filterToken.substring(1);
+                String prefix = line.substring(max(slashIndex, atIndex - 1, bracketIndex) + 1, caretIndex);
+                if (prefix.startsWith(":")) {
+                    prefix = prefix.substring(1);
                 }
 
                 try {
@@ -99,7 +110,7 @@ public class XPathCompletionProvider implements CompletionProvider {
                         // this is faster than parsing a document but kinda hacky
                         boolean hasNamespace = xml.contains("xmlns");
 
-                        Set<String> set = new HashSet<>();
+                        Set<String> items = new HashSet<>();
 
                         for (int b = 0; b < list.getLength(); b++) {
 
@@ -109,8 +120,8 @@ public class XPathCompletionProvider implements CompletionProvider {
                             if (attributes != null) {
                                 for(int a = 0; a < attributes.getLength(); a++) {
                                     String name = attributes.item(a).getNodeName();
-                                    if(name != null && name.startsWith(filterToken)) {
-                                        set.add("@"+name);
+                                    if (name != null && (name = "@"+name).startsWith(prefix)) {
+                                        items.add(name);
                                     }
                                 }
                             }
@@ -119,19 +130,23 @@ public class XPathCompletionProvider implements CompletionProvider {
                                 Node item = childNodes.item(n);
                                 String name = item.getNodeName();
                                 String localName = item.getLocalName();
-                                if (item.getNodeType() == Node.ELEMENT_NODE && (name.startsWith(filterToken) || localName.startsWith(filterToken))) {
+                                if (item.getNodeType() == Node.ELEMENT_NODE && (name.startsWith(prefix) || localName.startsWith(prefix))) {
                                     if (hasNamespace && item.getPrefix() == null) {
-                                        set.add(":"+name);
+                                        items.add(":"+name);
                                     } else {
-                                        set.add(name);
+                                        items.add(name);
                                     }
                                 }
                             }
 
                         }
 
-                        for (String item : set) {
-                            completionResultSet.addItem(new XPathCompletionItem(item, dotOffset, caretOffset));
+                        if (items.isEmpty() && "text()".startsWith(prefix)) {
+                            items.add("text()");
+                        }
+
+                        for (String item : items) {
+                            completionResultSet.addItem(new XPathCompletionItem(item, dotOffset, caretIndex));
                         }
                     } else {
                         Completion.get().hideAll();
@@ -149,6 +164,14 @@ public class XPathCompletionProvider implements CompletionProvider {
 
             completionResultSet.finish();
 
+        }
+
+        private static int max(int a, int b) {
+            return Math.max(a, b);
+        }
+
+        private static int max(int a, int b, int c) {
+            return Math.max(Math.max(a, b), c);
         }
     }
 
