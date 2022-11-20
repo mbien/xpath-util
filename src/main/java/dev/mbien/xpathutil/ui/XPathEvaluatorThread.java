@@ -45,7 +45,7 @@ final class XPathEvaluatorThread extends Thread {
                         wait();
                     }
                 } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
+                    Thread.interrupted();
                     return;
                 }
             }
@@ -74,7 +74,7 @@ final class XPathEvaluatorThread extends Thread {
             try {
                 SwingUtilities.invokeAndWait(() -> XPathEvaluatorThread.this.component.setText(result));
             } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
+                Thread.interrupted();
                 return;
             } catch (InvocationTargetException ex) {
                 Exceptions.printStackTrace(ex);

@@ -45,11 +45,7 @@ public class XPathCompletionProvider implements CompletionProvider {
 
     @Override
     public int getAutoQueryTypes(JTextComponent component, String str) {
-        if (str != null && (str.endsWith("/") || str.endsWith("@"))) {
-            return CompletionProvider.COMPLETION_QUERY_TYPE;
-        } else {
-            return 0;
-        }
+        return str != null && (str.endsWith("/") || str.endsWith("@")) ? CompletionProvider.COMPLETION_QUERY_TYPE : 0;
     }
 
     private static class XPathCompletionQuery extends AsyncCompletionQuery {
@@ -61,30 +57,32 @@ public class XPathCompletionProvider implements CompletionProvider {
 
             try {
                 String lineTilCaret = doc.getText(0, caretOffset);
-                String lineTilCaretTrimed = lineTilCaret.strip();
+                String lineTilCaretStripped = lineTilCaret.strip();
 
                 String exp;
-                String filterToken;
 
                 int slashIndex = lineTilCaret.lastIndexOf('/');
                 int atIndex = lineTilCaret.lastIndexOf('@');
 
                 int dotOffset;
-                if(lineTilCaretTrimed.length() >= 2 && lineTilCaretTrimed.charAt(0) == '/' && lineTilCaretTrimed.charAt(1) == '/' && lineTilCaretTrimed.lastIndexOf('/') == 1) {
+                if (lineTilCaretStripped.length() >= 2 && lineTilCaretStripped.charAt(0) == '/' && lineTilCaretStripped.charAt(1) == '/' && lineTilCaretStripped.lastIndexOf('/') == 1) {
                     exp = lineTilCaret.substring(0, slashIndex+1) + "*";
                     dotOffset = caretOffset - lineTilCaret.length() + exp.length()-1;
-                }else if(lineTilCaretTrimed.length() >= 1 && lineTilCaretTrimed.charAt(0) == '/' && lineTilCaretTrimed.lastIndexOf('/') == 0) {
+                } else if (lineTilCaretStripped.length() >= 1 && lineTilCaretStripped.charAt(0) == '/' && lineTilCaretStripped.lastIndexOf('/') == 0) {
                     exp = lineTilCaret.substring(0, slashIndex+1);
                     dotOffset = caretOffset - lineTilCaret.length() + exp.length();
-                }else if(slashIndex != -1 || atIndex != -1) {
+                } else if (slashIndex != -1 || atIndex != -1) {
                     exp = lineTilCaret.substring(0, Math.max(atIndex-1, slashIndex));
                     dotOffset = caretOffset - lineTilCaret.length() + exp.length()+1;
-                } else{
+                } else {
                     exp = "/";
                     dotOffset = 0;
                 }
 
-                filterToken = lineTilCaret.substring(Math.max(slashIndex, atIndex)+1, caretOffset);
+                String filterToken = lineTilCaret.substring(Math.max(slashIndex, atIndex)+1, caretOffset);
+                if (filterToken.startsWith(":")) {
+                    filterToken = filterToken.substring(1);
+                }
 
                 try {
                     String xml;
@@ -96,14 +94,14 @@ public class XPathCompletionProvider implements CompletionProvider {
 
                     NodeList list = (NodeList)eval.evaluate(exp, xml, XPathConstants.NODESET);
 
-                    if(list != null) {
+                    if (list != null) {
 
                         // this is faster than parsing a document but kinda hacky
                         boolean hasNamespace = xml.contains("xmlns");
 
                         Set<String> set = new HashSet<>();
 
-                        for(int b = 0; b < list.getLength(); b++) {
+                        for (int b = 0; b < list.getLength(); b++) {
 
                             Node current = list.item(b);
 
@@ -117,10 +115,11 @@ public class XPathCompletionProvider implements CompletionProvider {
                                 }
                             }
                             NodeList childNodes = current.getChildNodes();
-                            for(int n = 0; n < childNodes.getLength(); n++) {
+                            for (int n = 0; n < childNodes.getLength(); n++) {
                                 Node item = childNodes.item(n);
                                 String name = item.getNodeName();
-                                if(item.getNodeType() == Node.ELEMENT_NODE && name.startsWith(filterToken)) {
+                                String localName = item.getLocalName();
+                                if (item.getNodeType() == Node.ELEMENT_NODE && (name.startsWith(filterToken) || localName.startsWith(filterToken))) {
                                     if (hasNamespace && item.getPrefix() == null) {
                                         set.add(":"+name);
                                     } else {
@@ -134,7 +133,7 @@ public class XPathCompletionProvider implements CompletionProvider {
                         for (String item : set) {
                             completionResultSet.addItem(new XPathCompletionItem(item, dotOffset, caretOffset));
                         }
-                    }else{
+                    } else {
                         Completion.get().hideAll();
                     }
 
