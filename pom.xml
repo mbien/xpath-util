@@ -35,7 +35,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>11</maven.compiler.release>
         <nbversion>RELEASE140</nbversion>
     </properties>
 
@@ -45,6 +44,20 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <configuration>
+                            <release>11</release>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <configuration>
+                            <release>17</release>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -149,6 +162,25 @@
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-api-xml-ui</artifactId>
             <version>${nbversion}</version>
+        </dependency>
+        <!--test-->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>5.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.9.1</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

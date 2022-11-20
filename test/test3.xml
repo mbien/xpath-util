@@ -1,9 +1,0 @@
-
-<table
-xmlns="http://www.w3.org/TR/html42/"
-xmlns:h="http://www.w3.org/TR/html4/">
-    <tr>
-        <td>Apples</td>
-        <h:td>Bananas</h:td>
-    </tr>
-</table>
