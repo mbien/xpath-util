@@ -8,7 +8,7 @@
 
     <groupId>dev.mbien.netbeans.xpath</groupId>
     <artifactId>xpath-util</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.5-SNAPSHOT</version>
     <packaging>nbm</packaging>
 
     <licenses>
@@ -75,8 +75,8 @@
                 <version>4.8</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <additionalArguments>
-                    </additionalArguments>
+                    <licenseName>LGPL 2.1</licenseName>
+                    <licenseFile>${basedir}/license</licenseFile>
                 </configuration>
             </plugin>
         </plugins>
