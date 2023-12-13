@@ -1,9 +1,7 @@
 package dev.mbien.xpathutil.ui;
 
 import dev.mbien.xpathutil.XPathDataObject;
-import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
@@ -14,10 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -31,6 +29,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import org.netbeans.api.editor.EditorRegistry;
+import org.netbeans.editor.Utilities;
 import org.netbeans.modules.editor.NbEditorUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -50,7 +49,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 
 /**
- * Top component for XPath evaluation.
+ * Top component for XPath expression evaluation.
  * @author Michael Bien
  */
 @TopComponent.Description(
@@ -98,11 +97,6 @@ public final class XPathTopComponent extends TopComponent {
     private transient String lastFilename;
 
     public XPathTopComponent() {
-
-//        org.netbeans.spi.editor.mimelookup.MimeDataProvider mdp = Lookup.getDefault().lookup(MimeDataProvider.class);
-//        Lookup mime = mdp.getLookup(MimePath.get("text/x-xpath"));
-//        java.util.prefs.Preferences pref = mime.lookup(Preferences.class);
-//        pref.putInt("SimpleValueNames.TEXT_LIMIT_WIDTH"/*org.netbeans.modules.editor.lib.EditorPreferencesKeys.TEXT_LIMIT_WIDTH*/, 1);
         
         initComponents();
 
@@ -111,7 +105,6 @@ public final class XPathTopComponent extends TopComponent {
         setIcon(ImageUtilities.loadImage(ICON_PATH, true));
 
         outputPane.setEditorKit(CloneableEditorSupport.getEditorKit("text/xml"));
-        xpathTextField.setEditorKit(CloneableEditorSupport.getEditorKit(XPathDataObject.MIME_TYPE));
 
         docListener = new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e)  { xpathTextFieldChanged(e.getDocument()); }
@@ -122,8 +115,8 @@ public final class XPathTopComponent extends TopComponent {
 
         xpathTextField.addKeyListener(new KeyAdapter() {
             @Override public void keyPressed(KeyEvent e) {
-                if(e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    e.consume(); // hack: consume the return key to prevent new lines
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    e.consume(); // TODO without this, completion items are inserted twice
                     xpathTextFieldChanged(((JTextComponent)e.getComponent()).getDocument());
                 }
             }
@@ -149,7 +142,7 @@ public final class XPathTopComponent extends TopComponent {
         JScrollPane scrollPane = new JScrollPane();
         outputPane = new JEditorPane();
         JButton saveButton = new JButton();
-        xpathTextField = new JEditorPane();
+        JScrollPane editorScrollPane = createXPathEditor();
 
         Mnemonics.setLocalizedText(expressionLabel, NbBundle.getMessage(XPathTopComponent.class, "XPathTopComponent.expressionLabel.text")); // NOI18N
 
@@ -158,13 +151,7 @@ public final class XPathTopComponent extends TopComponent {
         scrollPane.setViewportView(outputPane);
 
         Mnemonics.setLocalizedText(saveButton, NbBundle.getMessage(XPathTopComponent.class, "XPathTopComponent.saveButton.text")); // NOI18N
-        saveButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                saveButtonActionPerformed(evt);
-            }
-        });
-
-        xpathTextField.setBorder(BorderFactory.createLineBorder(new Color(0, 0, 0)));
+        saveButton.addActionListener(this::saveButtonActionPerformed);
 
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
@@ -176,7 +163,7 @@ public final class XPathTopComponent extends TopComponent {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(expressionLabel)
                         .addPreferredGap(ComponentPlacement.RELATED)
-                        .addComponent(xpathTextField)
+                        .addComponent(editorScrollPane, GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE)
                         .addPreferredGap(ComponentPlacement.RELATED)
                         .addComponent(saveButton)))
                 .addContainerGap())
@@ -184,13 +171,13 @@ public final class XPathTopComponent extends TopComponent {
         layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(Alignment.LEADING, false)
                     .addGroup(layout.createParallelGroup(Alignment.BASELINE)
                         .addComponent(expressionLabel)
                         .addComponent(saveButton))
-                    .addComponent(xpathTextField, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE))
+                    .addComponent(editorScrollPane))
                 .addPreferredGap(ComponentPlacement.RELATED)
-                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE)
+                .addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -246,9 +233,14 @@ public final class XPathTopComponent extends TopComponent {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JEditorPane outputPane;
-    private JEditorPane xpathTextField;
     // End of variables declaration//GEN-END:variables
+    private JEditorPane xpathTextField;
 
+    private JScrollPane createXPathEditor() {
+        JComponent[] comp = Utilities.createSingleLineEditor(XPathDataObject.MIME_TYPE);
+        xpathTextField = (JEditorPane) comp[1];
+        return (JScrollPane) comp[0];
+    }
 
     private void editorFocusChanged(JTextComponent inFocus) {
         if (inFocus != null && xpathTextField != inFocus && !inFocus.getClass().getPackageName().startsWith("org.netbeans.modules.quicksearch")) {
@@ -297,8 +289,8 @@ public final class XPathTopComponent extends TopComponent {
 
     public static synchronized XPathTopComponent findInstance() {
         TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        if (win instanceof XPathTopComponent) {
-            return (XPathTopComponent) win;
+        if (win instanceof XPathTopComponent tc) {
+            return tc;
         }
         Logger.getLogger(XPathTopComponent.class.getName()).warning(
                 "There seem to be multiple components with the '" + PREFERRED_ID +"' ID!");
