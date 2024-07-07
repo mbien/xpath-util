@@ -8,7 +8,7 @@
 
     <groupId>dev.mbien.netbeans.xpath</groupId>
     <artifactId>xpath-util</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     <packaging>nbm</packaging>
 
     <licenses>
